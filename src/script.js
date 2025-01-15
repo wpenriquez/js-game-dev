@@ -10,9 +10,9 @@ window.addEventListener("load", function () {
       window.addEventListener("keydown", (e) => {
         const keyIndex = this.game.keys.indexOf(e.key);
         const keyInputs = ["ArrowUp", "ArrowDown", "Shift", "a", " "];
-        if (!this.game.gameOver) {
+        if (!this.game.gameOver && !this.game.gamePaused) {
           if (keyIndex === -1 && keyInputs.includes(e.key)) {
-            if (e.key === " ") {
+            if (this.game.gameStart && e.key === " ") {
               // this.game.rapidFire = true;
               this.game.player.shootTop();
             }
@@ -29,6 +29,18 @@ window.addEventListener("load", function () {
 
         if (e.key === "m") {
           this.game.displayTouchControls = !this.game.displayTouchControls;
+        }
+
+        if (!this.game.gameStart && e.key === " ") {
+          this.game.gameStart = true;
+        }
+
+        if (this.game.gameOver && e.key === "r") {
+          this.game.resetGame();
+        }
+
+        if (!this.game.gameOver && e.key === "Escape") {
+          this.game.gamePaused = !this.game.gamePaused;
         }
       });
       window.addEventListener("keyup", (e) => {
@@ -50,15 +62,23 @@ window.addEventListener("load", function () {
       this.downButton = document.getElementById("downButton");
       this.fireButton = document.getElementById("fire");
       this.autoFireButton = document.getElementById("autoFire");
+      this.pauseButton = document.getElementById("pauseButton");
 
       const handleButtonPressed = (button) => {
-        if (!this.game.gameOver) {
-          if (button === "fire") {
-            this.game.player.shootTop();
-            this.game.rapidFire = true;
+        if (button === "fire") {
+          if (!this.game.gameOver) {
+            if (!this.game.gameStart) {
+              this.game.gameStart = true;
+            } else if (!this.game.gamePaused) {
+              this.game.player.shootTop();
+              this.game.rapidFire = true;
+            }
+          } else {
+            this.game.resetGame();
           }
-          this.game.keys.push(button);
         }
+
+        this.game.keys.push(button);
       };
 
       const handleButtonReleased = (button) => {
@@ -89,7 +109,7 @@ window.addEventListener("load", function () {
         handleButtonReleased(e.target.id);
       });
 
-      // autofire button actions
+      // autofire button action
       this.autoFireButton.addEventListener("touchstart", () => {
         this.game.autoFire = !this.game.autoFire;
       });
@@ -101,6 +121,24 @@ window.addEventListener("load", function () {
 
       this.fireButton.addEventListener("touchend", (e) => {
         handleButtonReleased(e.target.id);
+      });
+
+      // pause button actions
+      this.pauseButton.addEventListener("touchstart", () => {
+        if (this.game.gameStart) {
+          this.game.gamePaused = !this.game.gamePaused;
+        }
+        const icon = this.pauseButton.querySelectorAll(".pauseIcon");
+        icon.forEach((part) => {
+          part.style.backgroundColor = "grey";
+        });
+      });
+
+      this.pauseButton.addEventListener("touchend", () => {
+        const icon = this.pauseButton.querySelectorAll(".pauseIcon");
+        icon.forEach((part) => {
+          part.style.backgroundColor = "white";
+        });
       });
     }
   }
@@ -811,11 +849,52 @@ window.addEventListener("load", function () {
         this.game.width * 0.9 - 20,
         40
       );
+
+      // game start
+      if (!this.game.gameStart) {
+        context.save();
+        context.textAlign = "center";
+        context.font = `50px ${this.fontFamily}`;
+        let gameStartMessage;
+
+        if (this.game.isMobileDevice) {
+          gameStartMessage = "Press 'FIRE' to Start";
+        } else {
+          gameStartMessage = "Press 'Space' to Start";
+        }
+        context.fillText(
+          gameStartMessage,
+          this.game.width * 0.5,
+          this.game.height * 0.5 + 40
+        );
+        context.restore();
+      }
+
+      // game paused
+      if (this.game.gamePaused) {
+        context.save();
+        context.textAlign = "center";
+        context.font = `50px ${this.fontFamily}`;
+
+        context.fillText(
+          "PAUSED",
+          this.game.width * 0.5,
+          this.game.height * 0.5 + 40
+        );
+        context.restore();
+      }
+
       // game over messages
       if (this.game.gameOver) {
         context.textAlign = "center";
         let message1;
         let message2;
+        let message3;
+        if (this.game.isMobileDevice) {
+          message3 = "Press 'FIRE' to play again";
+        } else {
+          message3 = "Press 'R' to play again";
+        }
         if (this.game.score > this.game.winningScore) {
           message1 = "You Win!";
           message2 = "Well done!";
@@ -834,6 +913,13 @@ window.addEventListener("load", function () {
           message2,
           this.game.width * 0.5,
           this.game.height * 0.5 + 40
+        );
+        context.font = `30px ${this.fontFamily}`;
+        context.fillStyle = "yellow";
+        context.fillText(
+          message3,
+          this.game.width * 0.5,
+          this.game.height * 0.5 + 100
         );
       }
       context.restore();
@@ -854,6 +940,8 @@ window.addEventListener("load", function () {
     constructor(width, height) {
       this.width = width;
       this.height = height;
+      this.gameStart = false;
+      this.gamePaused = false;
       this.background = new Background(this);
       this.player = new Player(this);
       this.shield = new Shield(this);
@@ -876,7 +964,7 @@ window.addEventListener("load", function () {
       this.ammoInterval = 350;
       this.gameOver = false;
       this.score = 0;
-      this.winningScore = 500;
+      this.winningScore = 100;
       this.gameTime = 120000;
       this.speed = 1;
       this.minSpeed = 1;
@@ -886,132 +974,146 @@ window.addEventListener("load", function () {
       );
       this.debug = false;
     }
+
     update(deltaTime) {
-      this.sound.bgm();
       if (
         this.displayTouchControls ||
-        (this.isMobileDevice && window.matchMedia("(orientation: landscape)").matches)
+        (this.isMobileDevice &&
+          window.matchMedia("(orientation: landscape)").matches)
       ) {
         document.getElementById("touchInput").style.display = "flex";
       } else {
         document.getElementById("touchInput").style.display = "none";
       }
-      if (!this.gameOver) this.gameTime -= deltaTime;
-      if (this.gameTime <= 0) this.gameOver = true;
-      this.background.update();
-      this.background.layer4.update();
-      this.player.update(deltaTime);
-      if (this.ammoTimer > this.ammoInterval) {
-        if (this.ammo < this.maxAmmo) {
-          this.ammo++;
-        }
-        this.ammoTimer = 0;
-      } else {
-        this.ammoTimer += deltaTime;
-      }
-      this.shield.update(deltaTime);
+      if (this.gameStart && !this.gamePaused) {
+        this.sound.bgm();
 
-      // Handle particles
-      this.particles.forEach((particle) => particle.update());
-      this.particles = this.particles.filter(
-        (particle) => !particle.markedForDeletion
-      );
-
-      // handle explosions
-      this.explosions.forEach((explosion) => explosion.update(deltaTime));
-      this.explosions = this.explosions.filter(
-        (explosion) => !explosion.markedForDeletion
-      );
-
-      // Handle enemies
-      this.enemies.forEach((enemy) => {
-        enemy.update();
-        if (this.checkCollisions(this.player, enemy)) {
-          enemy.markedForDeletion = true;
-          this.addExplosion(enemy);
-          this.shield.reset();
-          for (let i = 0; i < enemy.health; i++) {
-            this.particles.push(
-              new Particle(
-                this,
-                enemy.x + enemy.width * 0.5,
-                enemy.y + enemy.height * 0.5
-              )
-            );
+        if (!this.gameOver) this.gameTime -= deltaTime;
+        if (this.gameTime <= 0) this.gameOver = true;
+        this.background.update();
+        this.background.layer4.update();
+        this.player.update(deltaTime);
+        if (this.ammoTimer > this.ammoInterval) {
+          if (this.ammo < this.maxAmmo) {
+            this.ammo++;
           }
-          if (!this.gameOver) {
-            if (enemy.type === "lucky") this.player.enterPowerUp();
-            else this.player.health -= enemy.damage;
-          }
+          this.ammoTimer = 0;
+        } else {
+          this.ammoTimer += deltaTime;
         }
+        this.shield.update(deltaTime);
 
-        // handle player projectile collision
-        this.player.projectiles.forEach((projectile) => {
-          if (this.checkCollisions(projectile, enemy)) {
-            enemy.health--;
-            this.sound.hit();
-            projectile.markedForDeletion = true;
-            this.particles.push(
-              new Particle(
-                this,
-                enemy.x + enemy.width * 0.5,
-                enemy.y + enemy.height * 0.5
-              )
-            );
+        // Handle particles
+        this.particles.forEach((particle) => particle.update());
+        this.particles = this.particles.filter(
+          (particle) => !particle.markedForDeletion
+        );
 
-            // handle projectile collision on enemy
-            if (enemy.health <= 0) {
-              // handle particle effects
-              for (let i = 0; i < enemy.score; i++) {
-                this.particles.push(
-                  new Particle(
-                    this,
-                    enemy.x + enemy.width * 0.5,
-                    enemy.y + enemy.height * 0.5
-                  )
-                );
-              }
+        // handle explosions
+        this.explosions.forEach((explosion) => explosion.update(deltaTime));
+        this.explosions = this.explosions.filter(
+          (explosion) => !explosion.markedForDeletion
+        );
 
-              // handle enemy deletion
-              enemy.markedForDeletion = true;
+        // Handle enemies
+        this.enemies.forEach((enemy) => {
+          enemy.update();
+          if (this.checkCollisions(this.player, enemy)) {
+            enemy.markedForDeletion = true;
+            this.addExplosion(enemy);
+            this.shield.reset();
+            for (let i = 0; i < enemy.health; i++) {
+              this.particles.push(
+                new Particle(
+                  this,
+                  enemy.x + enemy.width * 0.5,
+                  enemy.y + enemy.height * 0.5
+                )
+              );
+            }
+            if (!this.gameOver) {
+              if (enemy.type === "lucky") this.player.enterPowerUp();
+              else this.player.health -= enemy.damage;
+            }
+          }
 
-              // add explosion effect
-              this.addExplosion(enemy);
+          // handle player projectile collision
+          this.player.projectiles.forEach((projectile) => {
+            if (this.checkCollisions(projectile, enemy)) {
+              enemy.health--;
+              this.sound.hit();
+              projectile.markedForDeletion = true;
+              this.particles.push(
+                new Particle(
+                  this,
+                  enemy.x + enemy.width * 0.5,
+                  enemy.y + enemy.height * 0.5
+                )
+              );
 
-              // handle enemy type 'hive'
-              if (enemy.type === "hive") {
-                for (let i = 0; i < 5; i++) {
-                  this.enemies.push(
-                    new Drone(
+              // handle projectile collision on enemy
+              if (enemy.health <= 0) {
+                // handle particle effects
+                for (let i = 0; i < enemy.score; i++) {
+                  this.particles.push(
+                    new Particle(
                       this,
-                      enemy.x + Math.random() * enemy.width,
-                      enemy.y + Math.random() * enemy.height * 0.5
+                      enemy.x + enemy.width * 0.5,
+                      enemy.y + enemy.height * 0.5
                     )
                   );
                 }
-              }
 
-              // handle enemy type 'moon'
-              if (enemy.type === "moon") this.player.enterPowerUp();
+                // handle enemy deletion
+                enemy.markedForDeletion = true;
 
-              // handle gameOver state and scoring
-              if (!this.gameOver) this.score += enemy.score;
-              if (this.score > this.winningScore) {
-                this.gameOver = true;
+                // add explosion effect
+                this.addExplosion(enemy);
+
+                // handle enemy type 'hive'
+                if (enemy.type === "hive") {
+                  for (let i = 0; i < 5; i++) {
+                    this.enemies.push(
+                      new Drone(
+                        this,
+                        enemy.x + Math.random() * enemy.width,
+                        enemy.y + Math.random() * enemy.height * 0.5
+                      )
+                    );
+                  }
+                }
+
+                // handle enemy type 'moon'
+                if (enemy.type === "moon") this.player.enterPowerUp();
+
+                // handle gameOver state and scoring
+                if (!this.gameOver) this.score += enemy.score;
+                if (this.score > this.winningScore) {
+                  this.gameOver = true;
+                }
               }
             }
-          }
+          });
         });
-      });
 
-      this.enemies = this.enemies.filter((enemy) => !enemy.markedForDeletion);
-      if (this.enemyTimer > this.enemyInterval && !this.gameOver) {
-        this.addEnemy();
-        this.enemyTimer = 0;
-      } else {
-        this.enemyTimer += deltaTime;
+        this.enemies = this.enemies.filter((enemy) => !enemy.markedForDeletion);
+        if (this.enemyTimer > this.enemyInterval && !this.gameOver) {
+          this.addEnemy();
+          this.enemyTimer = 0;
+        } else {
+          this.enemyTimer += deltaTime;
+        }
+
+        if (this.gameOver && this.score > this.winningScore) {
+          this.player.speedY = 0;
+          this.enemies.forEach((enemy) => {
+            enemy.markedForDeletion = true;
+            this.addExplosion(enemy);
+          });
+        }
       }
     }
+
     draw(context) {
       // draw background
       this.background.draw(context);
@@ -1039,6 +1141,7 @@ window.addEventListener("load", function () {
       // draw ui
       this.ui.draw(context);
     }
+
     addEnemy() {
       const randomize = Math.random();
       if (randomize < 0.3) this.enemies.push(new Angler1(this));
@@ -1048,6 +1151,7 @@ window.addEventListener("load", function () {
       else if (randomize < 0.9) this.enemies.push(new MoonFish(this));
       else this.enemies.push(new LuckyFish(this));
     }
+
     addExplosion(enemy) {
       const randomize = Math.random();
       this.sound.explosion();
@@ -1069,6 +1173,7 @@ window.addEventListener("load", function () {
         );
       }
     }
+
     checkCollisions(rect1, rect2) {
       return (
         rect1.x < rect2.x + rect2.width &&
@@ -1076,6 +1181,34 @@ window.addEventListener("load", function () {
         rect1.y < rect2.y + rect2.height &&
         rect1.height + rect1.y > rect2.y
       );
+    }
+
+    resetGame() {
+      this.gameOver = false;
+      this.background.layer1.x = 0;
+      this.background.layer2.x = 0;
+      this.background.layer3.x = 0;
+      this.background.layer4.x = 0;
+      this.player.health = 40;
+      this.player.x = 20;
+      this.player.y = 150;
+      this.player.frameY = 0;
+      this.player.powerUp = false;
+      this.enemies = [];
+      this.enemyTimer = 0;
+      this.enemyInterval = 2000;
+      this.autoFire = false;
+      this.rapidFire = false;
+      this.ammo = 20;
+      this.maxAmmo = 40;
+      this.ammoTimer = 0;
+      this.ammoInterval = 350;
+      this.score = 0;
+      this.winningScore = 100;
+      this.gameTime = 120000;
+      this.speed = 1;
+      this.minSpeed = 1;
+      this.boostSpeed = 2;
     }
   }
 

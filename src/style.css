@@ -67,6 +67,7 @@ body {
   position: absolute;
   display: none;
   justify-content: space-between;
+  align-items: flex-end;
 }
 
 .directionButtons {
@@ -115,6 +116,19 @@ body {
   font-size: 15px;
   color: black;
   background-color: white;
+}
+
+#pauseButton {
+  display: flex;
+  margin-left: 15%;
+  gap: 5px;
+  opacity: 0.3;
+}
+
+.pauseIcon {
+  background-color: white;
+  width: 20px;
+  height: 50px;
 }
 
 .actionButton:active {
