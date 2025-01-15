@@ -52,11 +52,13 @@ window.addEventListener("load", function () {
       this.autoFireButton = document.getElementById("autoFire");
 
       const handleButtonPressed = (button) => {
-        if (button === "fire") {
-          this.game.player.shootTop();
-          this.game.rapidFire = true;
+        if (!this.game.gameOver) {
+          if (button === "fire") {
+            this.game.player.shootTop();
+            this.game.rapidFire = true;
+          }
+          this.game.keys.push(button);
         }
-        this.game.keys.push(button);
       };
 
       const handleButtonReleased = (button) => {
@@ -71,23 +73,19 @@ window.addEventListener("load", function () {
 
       // up button actions
       this.upButton.addEventListener("touchstart", (e) => {
-        e.preventDefault();
         handleButtonPressed(e.target.id);
       });
 
       this.upButton.addEventListener("touchend", (e) => {
-        e.preventDefault();
         handleButtonReleased(e.target.id);
       });
 
       // down button actions
       this.downButton.addEventListener("touchstart", (e) => {
-        e.preventDefault();
         handleButtonPressed(e.target.id);
       });
 
       this.downButton.addEventListener("touchend", (e) => {
-        e.preventDefault();
         handleButtonReleased(e.target.id);
       });
 
@@ -98,12 +96,10 @@ window.addEventListener("load", function () {
 
       // fire button actions
       this.fireButton.addEventListener("touchstart", (e) => {
-        e.preventDefault();
         handleButtonPressed(e.target.id);
       });
 
       this.fireButton.addEventListener("touchend", (e) => {
-        e.preventDefault();
         handleButtonReleased(e.target.id);
       });
     }
@@ -892,7 +888,10 @@ window.addEventListener("load", function () {
     }
     update(deltaTime) {
       this.sound.bgm();
-      if (this.displayTouchControls || this.isMobileDevice) {
+      if (
+        this.displayTouchControls ||
+        (this.isMobileDevice && window.matchMedia("(orientation: landscape)").matches)
+      ) {
         document.getElementById("touchInput").style.display = "flex";
       } else {
         document.getElementById("touchInput").style.display = "none";
