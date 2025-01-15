@@ -58,10 +58,11 @@ body {
 }
 
 #touchInput {
-  padding-left: 30px;
-  padding-right: 30px;
-  left: 0;
-  top: 45%;
+  padding-left: 20px;
+  padding-right: 20px;
+  top: 65%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   width: 100%;
   position: absolute;
   display: none;
@@ -76,42 +77,42 @@ body {
 
 .directionButton,
 .actionButton {
-  width: 100px;
-  height: 100px;
-  opacity: 0.5;
+  width: 50px;
+  height: 50px;
+  opacity: 0.3;
 }
 
 .upButton {
   width: 0;
   height: 0;
-  border-left: 60px solid transparent;
-  border-right: 60px solid transparent;
-  border-bottom: 100px solid white;
+  border-left: 40px solid transparent;
+  border-right: 40px solid transparent;
+  border-bottom: 50px solid white;
 }
 
 .downButton {
   width: 0;
   height: 0;
-  border-left: 60px solid transparent;
-  border-right: 60px solid transparent;
-  border-top: 100px solid white;
+  border-left: 40px solid transparent;
+  border-right: 40px solid transparent;
+  border-top: 50px solid white;
 }
 
 #actionButtons {
   display: flex;
-  gap: 50px;
+  gap: 30px;
   align-items: flex-end;
 }
 
 .actionButton {
   user-select: none;
   display: flex;
-  width: 135px;
-  height: 135px;
+  width: 80px;
+  height: 80px;
   border-radius: 100px;
   align-items: center;
   justify-content: center;
-  font-size: 25px;
+  font-size: 15px;
   color: black;
   background-color: white;
 }
