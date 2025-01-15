@@ -53,6 +53,7 @@ window.addEventListener("load", function () {
 
       const handleButtonPressed = (button) => {
         if (button === "fire") {
+          this.game.player.shootTop();
           this.game.rapidFire = true;
         }
         this.game.keys.push(button);
@@ -69,34 +70,40 @@ window.addEventListener("load", function () {
       };
 
       // up button actions
-      this.upButton.addEventListener("mousedown", (e) => {
+      this.upButton.addEventListener("touchstart", (e) => {
+        e.preventDefault();
         handleButtonPressed(e.target.id);
       });
 
-      this.upButton.addEventListener("mouseup", (e) => {
+      this.upButton.addEventListener("touchend", (e) => {
+        e.preventDefault();
         handleButtonReleased(e.target.id);
       });
 
       // down button actions
-      this.downButton.addEventListener("mousedown", (e) => {
+      this.downButton.addEventListener("touchstart", (e) => {
+        e.preventDefault();
         handleButtonPressed(e.target.id);
       });
 
-      this.downButton.addEventListener("mouseup", (e) => {
+      this.downButton.addEventListener("touchend", (e) => {
+        e.preventDefault();
         handleButtonReleased(e.target.id);
       });
 
       // autofire button actions
-      this.autoFireButton.addEventListener("mousedown", () => {
+      this.autoFireButton.addEventListener("touchstart", () => {
         this.game.autoFire = !this.game.autoFire;
       });
 
       // fire button actions
-      this.fireButton.addEventListener("mousedown", (e) => {
+      this.fireButton.addEventListener("touchstart", (e) => {
+        e.preventDefault();
         handleButtonPressed(e.target.id);
       });
 
-      this.fireButton.addEventListener("mouseup", (e) => {
+      this.fireButton.addEventListener("touchend", (e) => {
+        e.preventDefault();
         handleButtonReleased(e.target.id);
       });
     }
