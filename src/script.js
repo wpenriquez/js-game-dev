@@ -26,6 +26,10 @@ window.addEventListener("load", function () {
         if (e.key === "d") {
           this.game.debug = !this.game.debug;
         }
+
+        if (e.key === "m") {
+          this.game.displayTouchControls = !this.game.displayTouchControls;
+        }
       });
       window.addEventListener("keyup", (e) => {
         const keyIndex = this.game.keys.indexOf(e.key);
@@ -35,6 +39,65 @@ window.addEventListener("load", function () {
           }
           this.game.keys.splice(keyIndex, 1);
         }
+      });
+    }
+  }
+
+  class TouchScreenInputHandler {
+    constructor(game) {
+      this.game = game;
+      this.upButton = document.getElementById("upButton");
+      this.downButton = document.getElementById("downButton");
+      this.fireButton = document.getElementById("fire");
+      this.autoFireButton = document.getElementById("autoFire");
+
+      const handleButtonPressed = (button) => {
+        if (button === "fire") {
+          this.game.rapidFire = true;
+        }
+        this.game.keys.push(button);
+      };
+
+      const handleButtonReleased = (button) => {
+        const keyIndex = this.game.keys.indexOf(button);
+        if (keyIndex > -1) {
+          if (button === "fire") {
+            this.game.rapidFire = false;
+          }
+          this.game.keys.splice(keyIndex, 1);
+        }
+      };
+
+      // up button actions
+      this.upButton.addEventListener("mousedown", (e) => {
+        handleButtonPressed(e.target.id);
+      });
+
+      this.upButton.addEventListener("mouseup", (e) => {
+        handleButtonReleased(e.target.id);
+      });
+
+      // down button actions
+      this.downButton.addEventListener("mousedown", (e) => {
+        handleButtonPressed(e.target.id);
+      });
+
+      this.downButton.addEventListener("mouseup", (e) => {
+        handleButtonReleased(e.target.id);
+      });
+
+      // autofire button actions
+      this.autoFireButton.addEventListener("mousedown", () => {
+        this.game.autoFire = !this.game.autoFire;
+      });
+
+      // fire button actions
+      this.fireButton.addEventListener("mousedown", (e) => {
+        handleButtonPressed(e.target.id);
+      });
+
+      this.fireButton.addEventListener("mouseup", (e) => {
+        handleButtonReleased(e.target.id);
       });
     }
   }
@@ -273,9 +336,15 @@ window.addEventListener("load", function () {
     update(deltaTime) {
       if (!this.game.gameOver) {
         // handle movement
-        if (this.game.keys.includes("ArrowUp")) {
+        if (
+          this.game.keys.includes("ArrowUp") ||
+          this.game.keys.includes("upButton")
+        ) {
           this.speedY = this.powerUp ? -this.maxSpeed : -this.minSpeed;
-        } else if (this.game.keys.includes("ArrowDown")) {
+        } else if (
+          this.game.keys.includes("ArrowDown") ||
+          this.game.keys.includes("downButton")
+        ) {
           this.speedY = this.powerUp ? this.maxSpeed : this.minSpeed;
         } else {
           this.speedY = 0;
@@ -786,8 +855,10 @@ window.addEventListener("load", function () {
       this.player = new Player(this);
       this.shield = new Shield(this);
       this.input = new InputHandler(this);
+      this.touchInput = new TouchScreenInputHandler(this);
       this.ui = new UI(this);
       this.sound = new SoundController();
+      this.displayTouchControls = false;
       this.keys = [];
       this.enemies = [];
       this.particles = [];
@@ -807,10 +878,18 @@ window.addEventListener("load", function () {
       this.speed = 1;
       this.minSpeed = 1;
       this.boostSpeed = 2;
+      this.isMobileDevice = /Mobi|Android|iPhone|iPad|iPod/i.test(
+        navigator.userAgent
+      );
       this.debug = false;
     }
     update(deltaTime) {
       this.sound.bgm();
+      if (this.displayTouchControls || this.isMobileDevice) {
+        document.getElementById("touchInput").style.display = "flex";
+      } else {
+        document.getElementById("touchInput").style.display = "none";
+      }
       if (!this.gameOver) this.gameTime -= deltaTime;
       if (this.gameTime <= 0) this.gameOver = true;
       this.background.update();

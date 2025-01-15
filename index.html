@@ -13,7 +13,21 @@
     <link rel="stylesheet" href="src/style.css" />
   </head>
   <body>
-    <canvas id="canvas1"></canvas>
+    <div id="gameScreen">
+      <canvas id="canvas1"></canvas>
+      <!-- touch input -->
+      <div id="touchInput">
+        <div class="directionButtons">
+          <div id="upButton" class="directionButton upButton"></div>
+          <div id="downButton" class="directionButton downButton"></div>
+        </div>
+        <div id="actionButtons">
+          <div id="autoFire" class="actionButton autoFire">AUTO-FIRE</div>
+          <div id="fire" class="actionButton fire">FIRE</div>
+        </div>
+      </div>
+    </div>
+
     <!-- characters -->
     <img id="player" src="assets/images/player.png" />
     <img id="angler1" src="assets/images/angler1.png" />
