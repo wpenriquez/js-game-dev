@@ -13,7 +13,7 @@ window.addEventListener("load", function () {
         if (!this.game.gameOver && !this.game.gamePaused) {
           if (keyIndex === -1 && keyInputs.includes(e.key)) {
             if (this.game.gameStart && e.key === " ") {
-              // this.game.rapidFire = true;
+              this.game.rapidFire = true;
               this.game.player.shootTop();
             }
             if (e.key === "a") {
@@ -161,13 +161,13 @@ window.addEventListener("load", function () {
 
     powerUp() {
       this.powerUpSound.currentTime = 0;
-      this.powerUpSound.volume = 0.4;
+      this.powerUpSound.volume = 0.2;
       this.powerUpSound.play();
     }
 
     powerDown() {
       this.powerDownSound.currentTime = 0;
-      this.powerDownSound.volume = 0.4;
+      this.powerDownSound.volume = 0.25;
       this.powerDownSound.play();
     }
 
@@ -191,7 +191,7 @@ window.addEventListener("load", function () {
 
     shield() {
       this.shieldSound.currentTime = 0;
-      this.shieldSound.volume = 0.4;
+      this.shieldSound.volume = 0.2;
       this.shieldSound.play();
     }
   }
@@ -964,7 +964,7 @@ window.addEventListener("load", function () {
       this.ammoInterval = 350;
       this.gameOver = false;
       this.score = 0;
-      this.winningScore = 100;
+      this.winningScore = 500;
       this.gameTime = 120000;
       this.speed = 1;
       this.minSpeed = 1;
